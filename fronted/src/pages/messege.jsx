@@ -3,7 +3,7 @@ import io from "socket.io-client";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
-const socket = io("http://localhost:5000"); // replace with your server URL
+const socket = io("https://backend-w2fp.onrender.com"); // replace with your server URL
 
 export default function Meggege() {
     const [name, setName] = useState("");
@@ -74,7 +74,7 @@ export default function Meggege() {
         formData.append("file", file);
 
         try {
-            const res = await axios.post("http://localhost:5000/upload", formData, {
+            const res = await axios.post("https://backend-w2fp.onrender.com", formData, {
                 headers: { "Content-Type": "multipart/form-data" },
             });
 
