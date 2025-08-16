@@ -140,12 +140,25 @@ export default function Meggege() {
 
                                         {msg.type === "pdf" && (
                                             <>
-                                                {/* optional preview */}
-                                                <img src={msg.text} alt="PDF preview" style={{ maxWidth: "200px", marginBottom: "5px" }} />
-                                                {/* actual PDF iframe */}
-                                                <iframe src={msg.fileUrl} width="100%" height="500px" />
+                                                {/* optional preview thumbnail */}
+                                                <img
+                                                    src={msg.text}
+                                                    alt="PDF preview"
+                                                    style={{ maxWidth: "200px", marginBottom: "5px" }}
+                                                />
+
+                                                {/* embedded PDF.js viewer */}
+                                                <iframe
+                                                    src={`https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(msg.fileUrl)}`}
+                                                    width="100%"
+                                                    height="500px"
+                                                    style={{ border: "none" }}
+                                                />
+
                                                 <br />
-                                                <a href={msg.fileUrl} download>Download PDF</a>
+                                                <a href={msg.fileUrl} download>
+                                                    Download PDF
+                                                </a>
                                             </>
                                         )}
 
