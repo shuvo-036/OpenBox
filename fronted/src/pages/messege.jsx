@@ -138,21 +138,33 @@ export default function Meggege() {
                                     className={msg.sender === name ? "message user-msg" : "message group-msg"}
                                 >
                                     <div className="msg-header">
-                                        <strong>{msg.sender}</strong> &nbsp;&nbsp; <span className="msg-time">{msg.time}</span>
+                                        <strong>{msg.sender}</strong> &nbsp;&nbsp;{" "}
+                                        <span className="msg-time">{msg.time}</span>
                                     </div>
                                     <div className="msg-body">
                                         {msg.type === "text" && msg.text}
+
                                         {msg.type === "image" && (
                                             <img src={msg.text} alt="img" />
                                         )}
+
                                         {msg.type === "pdf" && (
-                                            <a href={msg.text} target="_blank" rel="noopener noreferrer">PDF File</a>
+                                            <>
+                                                <iframe
+                                                    src={msg.text}
+                                                    width="100%"
+                                                    height="500px"
+                                                />
+                                                <br />
+                                                <a href={msg.text} download>Download PDF</a>
+                                            </>
                                         )}
                                     </div>
                                 </div>
                             ))}
                             <div ref={chatEndRef} />
                         </div>
+
 
                         <div className="input-bar">
                             <textarea
