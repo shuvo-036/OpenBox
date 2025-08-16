@@ -80,37 +80,25 @@ export default function Meggege() {
 
             const fileMessage = {
                 sender: name,
-                text: res.data.previewUrl,   // show this in chat
-                fileUrl: res.data.fileUrl,   // real pdf link
+                text: res.data.previewUrl,   // preview image
+                fileUrl: res.data.fileUrl,   // actual PDF or same for image
                 type: file.type.startsWith("image") ? "image" : "pdf",
                 time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
             };
-
 
             socket.emit("sendMessage", { room: keyValue, message: fileMessage });
         } catch (err) {
             console.error("File upload failed:", err);
         }
     };
+
     const handellogout = () => {
         Navigate("/");
-    }
+    };
 
     return (
-
         <>
-
-
-
             <div className="page-wrapper">
-
-                {/* ekhan theke start hobe  */}
-
-
-
-
-
-
                 {!name && (
                     <div className="snackbar">
                         <input
@@ -140,7 +128,7 @@ export default function Meggege() {
                                     className={msg.sender === name ? "message user-msg" : "message group-msg"}
                                 >
                                     <div className="msg-header">
-                                        <strong>{msg.sender}</strong> &nbsp;&nbsp;{" "}
+                                        <strong>{msg.sender}</strong> &nbsp;&nbsp;
                                         <span className="msg-time">{msg.time}</span>
                                     </div>
                                     <div className="msg-body">
@@ -152,7 +140,10 @@ export default function Meggege() {
 
                                         {msg.type === "pdf" && (
                                             <>
-                                                <iframe src={msg.text} width="100%" height="500px" />
+                                                {/* optional preview */}
+                                                <img src={msg.text} alt="PDF preview" style={{ maxWidth: "200px", marginBottom: "5px" }} />
+                                                {/* actual PDF iframe */}
+                                                <iframe src={msg.fileUrl} width="100%" height="500px" />
                                                 <br />
                                                 <a href={msg.fileUrl} download>Download PDF</a>
                                             </>
@@ -163,7 +154,6 @@ export default function Meggege() {
                             ))}
                             <div ref={chatEndRef} />
                         </div>
-
 
                         <div className="input-bar">
                             <textarea
@@ -182,14 +172,11 @@ export default function Meggege() {
                         </div>
                     </>
                 )}
+
                 <br /><br />
                 <div className="footer">
-
                     <p>Copyright © 2025 Golam Moniruzzaman</p>
-
-
                 </div>
-
             </div>
         </>
     );

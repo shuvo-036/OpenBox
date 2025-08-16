@@ -11,20 +11,17 @@ const server = http.createServer(app);
 const io = socketIo(server, { cors: { origin: "*" } });
 
 app.use(cors());
-
 app.use(express.json({ limit: "20mb" }));
 app.use(express.urlencoded({ limit: "20mb", extended: true }));
 
-
-
-// Cloudinary config (❗ keep only the KEY names here)
+// Cloudinary config
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// Multer (temp upload to server before sending to Cloudinary)
+// Multer (temporary upload before Cloudinary)
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, "uploads/"),
   filename: (req, file, cb) =>
@@ -32,35 +29,51 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// Upload endpoint (uploads file to Cloudinary and returns a public URL)
+// Upload endpoint
 app.post("/upload", upload.single("file"), async (req, res) => {
   try {
-    // upload the file normally (auto preview)
-    const uploaded = await cloudinary.uploader.upload(req.file.path, {
-      resource_type: "auto",
-    });
+    let previewUrl = "";
+    let fileUrl = "";
 
-    // if the file is a pdf, we also need the real pdf (raw)
-    let fileUrl = uploaded.secure_url;
-
-    if (req.file.mimetype === "application/pdf") {
-      const rawUpload = await cloudinary.uploader.upload(req.file.path, {
-        resource_type: "raw"
+    if (req.file.mimetype.startsWith("image")) {
+      // Image upload
+      const uploaded = await cloudinary.uploader.upload(req.file.path, {
+        resource_type: "image",
       });
-      fileUrl = rawUpload.secure_url; // this is the pure pdf
+      previewUrl = uploaded.secure_url;
+      fileUrl = uploaded.secure_url;
+
+    } else if (req.file.mimetype === "application/pdf") {
+      // PDF preview (PNG)
+      const preview = await cloudinary.uploader.upload(req.file.path, {
+        resource_type: "auto", // generates preview image
+      });
+      previewUrl = preview.secure_url;
+
+      // PDF actual file (raw)
+      const raw = await cloudinary.uploader.upload(req.file.path, {
+        resource_type: "raw", // real PDF
+      });
+      fileUrl = raw.secure_url;
+
+    } else {
+      // Other file types
+      const uploaded = await cloudinary.uploader.upload(req.file.path, {
+        resource_type: "auto",
+      });
+      previewUrl = uploaded.secure_url;
+      fileUrl = uploaded.secure_url;
     }
 
-    return res.json({
-      previewUrl: uploaded.secure_url, // for <iframe> or <img>
-      fileUrl     : fileUrl            // for download
-    });
+    return res.json({ previewUrl, fileUrl });
+
   } catch (err) {
     console.error("Upload error:", err);
     return res.status(500).json({ error: "Upload failed" });
   }
 });
 
-
+// Socket.io
 io.on("connection", (socket) => {
   console.log("User connected");
 
@@ -78,5 +91,7 @@ io.on("connection", (socket) => {
   });
 });
 
+// Start server
 server.listen(5000, () => console.log("Server running on port 5000"));
+
 
