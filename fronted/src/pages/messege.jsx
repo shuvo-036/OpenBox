@@ -80,10 +80,12 @@ export default function Meggege() {
 
             const fileMessage = {
                 sender: name,
-                text: res.data.url,
+                text: res.data.previewUrl,   // show this in chat
+                fileUrl: res.data.fileUrl,   // real pdf link
                 type: file.type.startsWith("image") ? "image" : "pdf",
                 time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
             };
+
 
             socket.emit("sendMessage", { room: keyValue, message: fileMessage });
         } catch (err) {
@@ -150,15 +152,12 @@ export default function Meggege() {
 
                                         {msg.type === "pdf" && (
                                             <>
-                                                <iframe
-                                                    src={msg.text}
-                                                    width="100%"
-                                                    height="500px"
-                                                />
+                                                <iframe src={msg.text} width="100%" height="500px" />
                                                 <br />
-                                                <a href={msg.text} download>Download PDF</a>
+                                                <a href={msg.fileUrl} download>Download PDF</a>
                                             </>
                                         )}
+
                                     </div>
                                 </div>
                             ))}

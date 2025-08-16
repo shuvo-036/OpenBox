@@ -35,15 +35,31 @@ const upload = multer({ storage });
 // Upload endpoint (uploads file to Cloudinary and returns a public URL)
 app.post("/upload", upload.single("file"), async (req, res) => {
   try {
-    const result = await cloudinary.uploader.upload(req.file.path, {
+    // upload the file normally (auto preview)
+    const uploaded = await cloudinary.uploader.upload(req.file.path, {
       resource_type: "auto",
     });
-    return res.json({ url: result.secure_url });
+
+    // if the file is a pdf, we also need the real pdf (raw)
+    let fileUrl = uploaded.secure_url;
+
+    if (req.file.mimetype === "application/pdf") {
+      const rawUpload = await cloudinary.uploader.upload(req.file.path, {
+        resource_type: "raw"
+      });
+      fileUrl = rawUpload.secure_url; // this is the pure pdf
+    }
+
+    return res.json({
+      previewUrl: uploaded.secure_url, // for <iframe> or <img>
+      fileUrl     : fileUrl            // for download
+    });
   } catch (err) {
     console.error("Upload error:", err);
     return res.status(500).json({ error: "Upload failed" });
   }
 });
+
 
 io.on("connection", (socket) => {
   console.log("User connected");
