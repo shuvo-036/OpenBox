@@ -12,6 +12,11 @@ const io = socketIo(server, { cors: { origin: "*" } });
 
 app.use(cors());
 
+app.use(express.json({ limit: "20mb" }));
+app.use(express.urlencoded({ limit: "20mb", extended: true }));
+
+
+
 // Cloudinary config (❗ keep only the KEY names here)
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
