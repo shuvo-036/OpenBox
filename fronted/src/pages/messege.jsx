@@ -3,135 +3,97 @@ import io from "socket.io-client";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
-// ⚠️ If you see duplicate connections in dev, ensure this file isn't hot-reloading multiple times.
-const socket = io("https://backend-w2fp.onrender.com", {
-    autoConnect: true,
-});
+const socket = io("https://backend-w2fp.onrender.com"); // replace with your server URL
 
 export default function Meggege() {
     const [name, setName] = useState("");
     const [tempName, setTempName] = useState("");
-    const [keyValue, setKeyValue] = useState("");
+    const [keyValue, setKeyValue] = useState(""); // user key
     const [tempKey, setTempKey] = useState("");
     const [messages, setMessages] = useState([]);
     const [inputValue, setInputValue] = useState("");
 
     const fileInputRef = useRef();
-    const chatEndRef = useRef();
-    const messageIdsRef = useRef(new Set()); // track IDs to avoid duplicates when server echoes back
-    const navigate = useNavigate();
+    const chatEndRef = useRef(); // scroll to bottom
+    const Navigate = useNavigate();
 
     // Join chat room
     const handleJoin = () => {
         if (tempName.trim() && tempKey.trim()) {
-            const cleanName = tempName.trim();
-            const cleanKey = tempKey.trim();
-            setName(cleanName);
-            setKeyValue(cleanKey);
+            setName(tempName.trim());
+            setKeyValue(tempKey.trim());
             setTempName("");
             setTempKey("");
 
-            socket.emit("joinRoom", { name: cleanName, room: cleanKey });
+            socket.emit("joinRoom", { name: tempName.trim(), room: tempKey.trim() });
         }
     };
 
-    // Listen for messages (attach once)
+    // Listen for messages
     useEffect(() => {
-        const onReceive = (msg) => {
-            const id =
-                msg.id ||
-                `${msg.sender}-${msg.time}-${msg.text?.slice(0, 20)}`;
+        socket.on("receiveMessage", (msg) => {
+            setMessages((prev) => [...prev, msg]);
+        });
 
-            if (messageIdsRef.current.has(id)) return;
-            messageIdsRef.current.add(id);
-
-            setMessages((prev) => [...prev, { ...msg, id }]);
-        };
-
-        socket.on("receiveMessage", onReceive);
-
-        return () => {
-            socket.off("receiveMessage", onReceive);
-        };
+        return () => socket.off("receiveMessage");
     }, []);
 
-    // Auto-scroll to bottom on new messages
+    // Auto-scroll to bottom
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
-    const nowTime = () =>
-        new Date().toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-        });
-
-    const genId = () =>
-        `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-
-    // Send text message (optimistic update)
+    // Send text message
     const sendMessage = () => {
-        if (!inputValue.trim() || !name || !keyValue) return;
+        if (!inputValue.trim()) return;
 
         const newMessage = {
-            id: genId(),
             sender: name,
             text: inputValue.trim(),
             type: "text",
-            time: nowTime(),
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         };
-
-        messageIdsRef.current.add(newMessage.id);
-        setMessages((prev) => [...prev, newMessage]);
 
         socket.emit("sendMessage", { room: keyValue, message: newMessage });
         setInputValue("");
     };
 
-    const handleKeyDown = (e) => {
-        if (e.key === "Enter" && !e.shiftKey) {
+    const handleKeyPress = (e) => {
+        if (e.key === "Enter") {
             e.preventDefault();
             sendMessage();
         }
     };
 
-    // Send files (PDF/Image) with optimistic update
+    // Send files (PDF/Image)
     const sendFile = async (e) => {
-        const file = e.target.files?.[0];
-        if (!file || !name || !keyValue) return;
+        const file = e.target.files[0];
+        if (!file) return;
 
         const formData = new FormData();
         formData.append("file", file);
 
         try {
-            const res = await axios.post(
-                "https://backend-w2fp.onrender.com/upload",
-                formData // 👈 no manual headers
-            );
+            const res = await axios.post("https://backend-w2fp.onrender.com/upload", formData, {
+                headers: { "Content-Type": "multipart/form-data" },
+            });
 
             const fileMessage = {
-                id: genId(),
                 sender: name,
-                text: res.data.previewUrl, // thumbnail or same URL for image
-                fileUrl: res.data.fileUrl, // direct file URL
+                text: res.data.previewUrl,   // preview image
+                fileUrl: res.data.fileUrl,   // actual PDF or same for image
                 type: file.type.startsWith("image") ? "image" : "pdf",
-                time: nowTime(),
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
             };
 
-            messageIdsRef.current.add(fileMessage.id);
-            setMessages((prev) => [...prev, fileMessage]);
-
             socket.emit("sendMessage", { room: keyValue, message: fileMessage });
-
-            if (fileInputRef.current) fileInputRef.current.value = "";
         } catch (err) {
-            console.error("File upload failed:", err.response || err.message);
-            alert("File upload failed. Please try again.");
+            console.error("File upload failed:", err);
         }
     };
 
-    const handleLogout = () => {
-        navigate("/");
+    const handellogout = () => {
+        Navigate("/");
     };
 
     return (
@@ -153,9 +115,7 @@ export default function Meggege() {
                             onChange={(e) => setTempKey(e.target.value)}
                             className="snackbar-input"
                         />
-                        <button onClick={handleJoin} className="snackbar-button">
-                            Join
-                        </button>
+                        <button onClick={handleJoin} className="snackbar-button">Join</button>
                     </div>
                 )}
 
@@ -164,12 +124,8 @@ export default function Meggege() {
                         <div className="chat-box">
                             {messages.map((msg, idx) => (
                                 <div
-                                    key={msg.id || idx}
-                                    className={
-                                        msg.sender === name
-                                            ? "message user-msg"
-                                            : "message group-msg"
-                                    }
+                                    key={idx}
+                                    className={msg.sender === name ? "message user-msg" : "message group-msg"}
                                 >
                                     <div className="msg-header">
                                         <strong>{msg.sender}</strong> &nbsp;&nbsp;
@@ -179,53 +135,33 @@ export default function Meggege() {
                                         {msg.type === "text" && msg.text}
 
                                         {msg.type === "image" && (
-                                            <img
-                                                src={msg.text}
-                                                alt={`${msg.sender}'s upload`}
-                                                style={{ maxWidth: "100%", borderRadius: 8 }}
-                                            />
+                                            <img src={msg.text} alt="img" />
                                         )}
 
                                         {msg.type === "pdf" && (
                                             <>
-                                                {msg.text && (
-                                                    <img
-                                                        src={msg.text}
-                                                        alt={`${msg.sender}'s PDF preview`}
-                                                        style={{
-                                                            maxWidth: "200px",
-                                                            marginBottom: 8,
-                                                            borderRadius: 6,
-                                                        }}
-                                                    />
-                                                )}
+                                                {/* optional preview thumbnail */}
+                                                <img
+                                                    src={msg.text}
+                                                    alt="PDF preview"
+                                                    style={{ maxWidth: "200px", marginBottom: "5px" }}
+                                                />
 
+                                                {/* embedded PDF.js viewer */}
                                                 <iframe
-                                                    title={`pdf-${msg.id}`}
-                                                    src={`https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(
-                                                        msg.fileUrl || ""
-                                                    )}`}
+                                                    src={`https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(msg.fileUrl)}`}
                                                     width="100%"
-                                                    height="60vh"
-                                                    allowFullScreen
+                                                    height="500px"
                                                     style={{ border: "none" }}
                                                 />
 
-                                                <div style={{ marginTop: 8 }}>
-                                                    <a
-                                                        href={msg.fileUrl}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                    >
-                                                        Open PDF in new tab
-                                                    </a>{" "}
-                                                    |{" "}
-                                                    <a href={msg.fileUrl} download>
-                                                        Download PDF
-                                                    </a>
-                                                </div>
+                                                <br />
+                                                <a href={msg.fileUrl} download>
+                                                    Download PDF
+                                                </a>
                                             </>
                                         )}
+
                                     </div>
                                 </div>
                             ))}
@@ -236,31 +172,21 @@ export default function Meggege() {
                             <textarea
                                 value={inputValue}
                                 onChange={(e) => setInputValue(e.target.value)}
-                                onKeyDown={handleKeyDown}
+                                onKeyPress={handleKeyPress}
                                 placeholder="Type a message..."
                                 className="chat-input"
                             />
                             <label className="file-icon">
                                 🖇
-                                <input
-                                    type="file"
-                                    ref={fileInputRef}
-                                    onChange={sendFile}
-                                    accept="image/*,.pdf"
-                                />
+                                <input type="file" ref={fileInputRef} onChange={sendFile} />
                             </label>
-                            <button className="send-button" onClick={sendMessage}>
-                                Send
-                            </button>
-                            <button className="end-button" onClick={handleLogout}>
-                                End-Room
-                            </button>
+                            <button className="send-button" onClick={sendMessage}>Send</button>
+                            <button className="end-button" onClick={handellogout}>End-Room</button>
                         </div>
                     </>
                 )}
 
-                <br />
-                <br />
+                <br /><br />
                 <div className="footer">
                     <p>Copyright © 2025 Golam Moniruzzaman</p>
                 </div>
@@ -268,4 +194,5 @@ export default function Meggege() {
         </>
     );
 }
+
 
