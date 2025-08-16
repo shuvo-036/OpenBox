@@ -4,22 +4,40 @@ const socketIo = require("socket.io");
 const multer = require("multer");
 const path = require("path");
 const cors = require("cors");
+const cloudinary = require("cloudinary").v2;
 
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, { cors: { origin: "*" } });
 
 app.use(cors());
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
+// Cloudinary config (❗ keep only the KEY names here)
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+// Multer (temp upload to server before sending to Cloudinary)
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, "uploads/"),
-  filename: (req, file, cb) => cb(null, Date.now() + "-" + file.originalname),
+  filename: (req, file, cb) =>
+    cb(null, Date.now() + "-" + file.originalname),
 });
 const upload = multer({ storage });
 
-app.post("/upload", upload.single("file"), (req, res) => {
-  res.json({ url: `http://localhost:5000/uploads/${req.file.filename}` });
+// Upload endpoint (uploads file to Cloudinary and returns a public URL)
+app.post("/upload", upload.single("file"), async (req, res) => {
+  try {
+    const result = await cloudinary.uploader.upload(req.file.path, {
+      resource_type: "auto",
+    });
+    return res.json({ url: result.secure_url });
+  } catch (err) {
+    console.error("Upload error:", err);
+    return res.status(500).json({ error: "Upload failed" });
+  }
 });
 
 io.on("connection", (socket) => {
@@ -40,3 +58,4 @@ io.on("connection", (socket) => {
 });
 
 server.listen(5000, () => console.log("Server running on port 5000"));
+
