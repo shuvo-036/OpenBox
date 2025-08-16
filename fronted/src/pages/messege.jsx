@@ -74,7 +74,7 @@ export default function Meggege() {
         formData.append("file", file);
 
         try {
-            const res = await axios.post("https://backend-w2fp.onrender.com", formData, {
+            const res = await axios.post("https://backend-w2fp.onrender.com/upload", formData, {
                 headers: { "Content-Type": "multipart/form-data" },
             });
 
