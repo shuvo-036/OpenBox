@@ -1,0 +1,301 @@
+
+/* line 74 theke messeger ta suru */
+
+*{
+  margin: auto;
+  padding: 0;
+
+
+
+
+
+}
+/* Full-screen gradient animated background */
+.error-wrapper {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(45deg, #ff4e50, #f9d423, #1e90ff, #8e44ad);
+  background-size: 600% 600%;
+  animation: gradientAnimation 15s ease infinite;
+  font-family: "Poppins", Arial, sans-serif;
+}
+
+/* Gradient animation */
+@keyframes gradientAnimation {
+  0%{background-position:0% 50%}
+  50%{background-position:100% 50%}
+  100%{background-position:0% 50%}
+}
+
+/* Glassmorphism style container */
+.error-container {
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  padding: 60px 80px;
+  text-align: center;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+/* Error Number */
+.error-title {
+  font-size: 9rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0;
+  text-shadow: 2px 4px 10px rgba(0,0,0,.3);
+}
+
+/* Error Text */
+.error-message {
+  margin-top: 10px;
+  font-size: 1.4rem;
+  color: #ffffff;
+  letter-spacing: 1px;
+}
+
+/* Button back home */
+.back-home {
+  display: inline-block;
+  margin-top: 30px;
+  padding: 12px 32px;
+  border-radius: 50px;
+  font-size: 1rem;
+  letter-spacing: 1px;
+  background: rgba(255,255,255,0.3);
+  color: #fff;
+  text-decoration: none;
+  transition: all 0.25s ease;
+  border: 1px solid rgba(255,255,255,0.35);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.back-home:hover {
+  transform: translateY(-4px) scale(1.03);
+  background: rgba(255,255,255,0.45);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+}
+
+/* meesge ekhan the messeger ta suru*/
+
+
+.page-wrapper {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #89f7fe, #66a6ff);
+    background-size: 400% 400%;
+    animation: bgGradient 20s ease infinite;
+    padding: 20px;
+}
+
+@keyframes bgGradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* Snackbar */
+.snackbar {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.3);
+    padding: 15px 25px;
+    border-radius: 16px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.snackbar-input {
+    flex: 1;
+    padding: 12px 16px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.2);
+    outline: none;
+}
+
+.snackbar-button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 12px;
+    font-weight: bold;
+    background: #fff;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.snackbar-button:hover {
+    background: #f0f0f0;
+    transform: translateY(-2px);
+}
+
+/* Chat Box */
+.chat-box {
+    width: 100%;
+    max-width: 650px;
+    height: 70vh;
+    background: #fff;
+    border-radius: 20px;
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+}
+
+/* Messages */
+.message {
+    max-width: 60%;
+    padding: 12px 18px;
+    border-radius: 20px;
+    word-wrap: break-word;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.message:hover {
+    transform: scale(1.02);
+}
+
+.user-msg {
+    align-self: flex-end;
+    background: linear-gradient(135deg, #0bb78f, #550b3a);
+    color: #fff;
+    margin-right: 10px;
+    border-bottom-right-radius: 4px;
+    text-align: right;
+}
+
+.group-msg {
+    align-self: flex-start;
+     background: linear-gradient(135deg, #460914, #12a86a);
+    color: white;
+    margin-left: 10px;
+    border-bottom-left-radius: 4px;
+    text-align: left;
+}
+
+/* Message header with name/time */
+.msg-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #10f4d9;
+    margin-bottom: 5px;
+}
+
+.msg-time {
+    font-weight: normal;
+    font-size: 11px;
+    color: #0aea49;
+}
+
+/* Images & PDFs */
+.message img {
+    max-width: 200px;
+    border-radius: 12px;
+    object-fit: cover;
+}
+
+.message a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border-radius: 12px;
+    text-decoration: none;
+    color: #1f2937;
+    font-weight: 500;
+    background: #f3f4f6;
+    border: 1px solid #d1d5db;
+    transition: all 0.2s ease;
+}
+
+.message a:hover {
+    background: #e5e7eb;
+}
+
+/* Input bar */
+.input-bar {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    max-width: 650px;
+    gap: 6px;
+}
+
+.chat-input {
+    flex: 1;
+    padding: 12px 16px;
+    padding-right: 40px;
+    border-radius: 25px;
+    border: 1px solid #ddd;
+    outline: none;
+    resize: none;
+    font-size: 14px;
+}
+
+/* File inside input */
+.file-icon {
+    position: relative;
+    left: -45px;
+    cursor: pointer;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #4f9cff;
+}
+
+.file-icon input {
+    display: none;
+}
+
+.file-icon:hover {
+    color: #3a7bd5;
+}
+
+/* Send button */
+.send-button {
+    padding: 10px 18px;
+    border-radius: 20px;
+    border: none;
+    background: #4f9cff;
+    color: #fff;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.send-button:hover {
+    background: #3a7bd5;
+    transform: translateY(-2px);
+}
+
+.end-button {
+    padding: 10px 18px;
+    border-radius: 20px;
+    border: none;
+    background: #540606;
+    color: #ece3e3;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.end-button:hover {
+    background: #cf1143;
+    transform: translateY(-2px);
+}
+
+
