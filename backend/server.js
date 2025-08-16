@@ -1,97 +1,86 @@
+
+
+
 const express = require("express");
 const http = require("http");
-const socketIo = require("socket.io");
+const { Server } = require("socket.io");
+const cors = require("cors");
 const multer = require("multer");
 const path = require("path");
-const cors = require("cors");
-const cloudinary = require("cloudinary").v2;
+const fs = require("fs");
 
+// Initialize app and server
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server, { cors: { origin: "*" } });
+const io = new Server(server, {
+  cors: {
+    origin: "*", // allow all origins (for dev)
+    methods: ["GET", "POST"],
+  },
+});
 
+// Middleware
 app.use(cors());
-app.use(express.json({ limit: "20mb" }));
-app.use(express.urlencoded({ limit: "20mb", extended: true }));
+app.use(express.json());
+app.use("/uploads", express.static(path.join(__dirname, "uploads"))); // serve uploaded files
 
-// Cloudinary config
-cloudinary.config({
-  cloud_name:"dh4kqxqjs",
-  api_key: " 679239181159316",
-  api_secret:" zWOj_3PWaxOrNzi7EceBwYaUmbE",
-});
-
-// Multer (temporary upload before Cloudinary)
+// Multer setup for file uploads
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, "uploads/"),
-  filename: (req, file, cb) =>
-    cb(null, Date.now() + "-" + file.originalname),
+  destination: (req, file, cb) => {
+    const dir = "./uploads";
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir);
+    cb(null, dir);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    cb(null, Date.now() + "-" + Math.random().toString(36).slice(2, 9) + ext);
+  },
 });
+
 const upload = multer({ storage });
 
-// Upload endpoint
-app.post("/upload", upload.single("file"), async (req, res) => {
-  try {
-    let previewUrl = "";
-    let fileUrl = "";
+// File upload endpoint
+app.post("/upload", upload.single("file"), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: "No file uploaded" });
 
-    if (req.file.mimetype.startsWith("image")) {
-      // Image upload
-      const uploaded = await cloudinary.uploader.upload(req.file.path, {
-        resource_type: "image",
-      });
-      previewUrl = uploaded.secure_url;
-      fileUrl = uploaded.secure_url;
+  const fileUrl = `http://localhost:5001/uploads/${req.file.filename}`;
+  const previewUrl = req.file.mimetype.startsWith("image") ? fileUrl : "";
 
-    } else if (req.file.mimetype === "application/pdf") {
-      // PDF preview (PNG)
-      const preview = await cloudinary.uploader.upload(req.file.path, {
-        resource_type: "auto", // generates preview image
-      });
-      previewUrl = preview.secure_url;
-
-      // PDF actual file (raw)
-      const raw = await cloudinary.uploader.upload(req.file.path, {
-        resource_type: "raw", // real PDF
-      });
-      fileUrl = raw.secure_url;
-
-    } else {
-      // Other file types
-      const uploaded = await cloudinary.uploader.upload(req.file.path, {
-        resource_type: "auto",
-      });
-      previewUrl = uploaded.secure_url;
-      fileUrl = uploaded.secure_url;
-    }
-
-    return res.json({ previewUrl, fileUrl });
-
-  } catch (err) {
-    console.error("Upload error:", err);
-    return res.status(500).json({ error: "Upload failed" });
-  }
+  res.json({ fileUrl, previewUrl });
 });
 
-// Socket.io
+// Socket.IO events
 io.on("connection", (socket) => {
-  console.log("User connected");
+  console.log("New client connected:", socket.id);
 
+  // Join a chat room
   socket.on("joinRoom", ({ name, room }) => {
     socket.join(room);
     console.log(`${name} joined room: ${room}`);
+
+    // Notify other users in the room
+    socket.to(room).emit("receiveMessage", {
+      id: `sys-${Date.now()}`,
+      sender: "System",
+      text: `${name} joined the chat`,
+      type: "text",
+      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    });
   });
 
+  // Handle messages
   socket.on("sendMessage", ({ room, message }) => {
     io.to(room).emit("receiveMessage", message);
   });
 
+  // Disconnect
   socket.on("disconnect", () => {
-    console.log("User disconnected");
+    console.log("Client disconnected:", socket.id);
   });
 });
 
 // Start server
-server.listen(5000, () => console.log("Server running on port 5000"));
+const PORT = 5001;
+server.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
 
 
