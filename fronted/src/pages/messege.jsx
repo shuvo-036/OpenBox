@@ -5,7 +5,6 @@ import { useNavigate } from "react-router-dom";
 
 // ⚠️ If you see duplicate connections in dev, ensure this file isn't hot-reloading multiple times.
 const socket = io("https://backend-w2fp.onrender.com", {
-    // transports: ["websocket"], // uncomment if you need to force websocket
     autoConnect: true,
 });
 
@@ -39,14 +38,18 @@ export default function Meggege() {
     // Listen for messages (attach once)
     useEffect(() => {
         const onReceive = (msg) => {
-            // De-dupe: prefer a stable `id` generated client-side when sending
-            const id = msg.id || `${msg.sender}-${msg.time}-${msg.text?.slice(0, 20)}`;
+            const id =
+                msg.id ||
+                `${msg.sender}-${msg.time}-${msg.text?.slice(0, 20)}`;
+
             if (messageIdsRef.current.has(id)) return;
             messageIdsRef.current.add(id);
+
             setMessages((prev) => [...prev, { ...msg, id }]);
         };
 
         socket.on("receiveMessage", onReceive);
+
         return () => {
             socket.off("receiveMessage", onReceive);
         };
@@ -58,9 +61,13 @@ export default function Meggege() {
     }, [messages]);
 
     const nowTime = () =>
-        new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+        new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+        });
 
-    const genId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+    const genId = () =>
+        `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
     // Send text message (optimistic update)
     const sendMessage = () => {
@@ -74,13 +81,10 @@ export default function Meggege() {
             time: nowTime(),
         };
 
-        // Optimistic add
         messageIdsRef.current.add(newMessage.id);
         setMessages((prev) => [...prev, newMessage]);
 
-        // Send to server
         socket.emit("sendMessage", { room: keyValue, message: newMessage });
-
         setInputValue("");
     };
 
@@ -102,30 +106,26 @@ export default function Meggege() {
         try {
             const res = await axios.post(
                 "https://backend-w2fp.onrender.com/upload",
-                formData,
-                { headers: { "Content-Type": "multipart/form-data" } }
+                formData // 👈 no manual headers
             );
 
             const fileMessage = {
                 id: genId(),
                 sender: name,
                 text: res.data.previewUrl, // thumbnail or same URL for image
-                fileUrl: res.data.fileUrl, // direct file URL (must be CORS-enabled for PDF.js)
+                fileUrl: res.data.fileUrl, // direct file URL
                 type: file.type.startsWith("image") ? "image" : "pdf",
                 time: nowTime(),
             };
 
-            // Optimistic add
             messageIdsRef.current.add(fileMessage.id);
             setMessages((prev) => [...prev, fileMessage]);
 
-            // Emit to server
             socket.emit("sendMessage", { room: keyValue, message: fileMessage });
 
-            // clear input for the same file selection again
             if (fileInputRef.current) fileInputRef.current.value = "";
         } catch (err) {
-            console.error("File upload failed:", err);
+            console.error("File upload failed:", err.response || err.message);
             alert("File upload failed. Please try again.");
         }
     };
@@ -165,13 +165,16 @@ export default function Meggege() {
                             {messages.map((msg, idx) => (
                                 <div
                                     key={msg.id || idx}
-                                    className={msg.sender === name ? "message user-msg" : "message group-msg"}
+                                    className={
+                                        msg.sender === name
+                                            ? "message user-msg"
+                                            : "message group-msg"
+                                    }
                                 >
                                     <div className="msg-header">
                                         <strong>{msg.sender}</strong> &nbsp;&nbsp;
                                         <span className="msg-time">{msg.time}</span>
                                     </div>
-
                                     <div className="msg-body">
                                         {msg.type === "text" && msg.text}
 
@@ -185,16 +188,18 @@ export default function Meggege() {
 
                                         {msg.type === "pdf" && (
                                             <>
-                                                {/* Optional preview thumbnail */}
                                                 {msg.text && (
                                                     <img
                                                         src={msg.text}
                                                         alt={`${msg.sender}'s PDF preview`}
-                                                        style={{ maxWidth: "200px", marginBottom: 8, borderRadius: 6 }}
+                                                        style={{
+                                                            maxWidth: "200px",
+                                                            marginBottom: 8,
+                                                            borderRadius: 6,
+                                                        }}
                                                     />
                                                 )}
 
-                                                {/* Embedded PDF.js viewer. Requires CORS on the PDF URL. */}
                                                 <iframe
                                                     title={`pdf-${msg.id}`}
                                                     src={`https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(
@@ -206,12 +211,15 @@ export default function Meggege() {
                                                     style={{ border: "none" }}
                                                 />
 
-                                                {/* Fallback link if viewer is blocked by CORS */}
                                                 <div style={{ marginTop: 8 }}>
-                                                    <a href={msg.fileUrl} target="_blank" rel="noopener noreferrer">
+                                                    <a
+                                                        href={msg.fileUrl}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                    >
                                                         Open PDF in new tab
-                                                    </a>
-                                                    {" "}|{" "}
+                                                    </a>{" "}
+                                                    |{" "}
                                                     <a href={msg.fileUrl} download>
                                                         Download PDF
                                                     </a>
@@ -260,3 +268,4 @@ export default function Meggege() {
         </>
     );
 }
+
