@@ -16,9 +16,9 @@ app.use(express.urlencoded({ limit: "20mb", extended: true }));
 
 // Cloudinary config
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
+  cloud_name:"dh4kqxqjs",
+  api_key: " 679239181159316",
+  api_secret:" zWOj_3PWaxOrNzi7EceBwYaUmbE",
 });
 
 // Multer (temporary upload before Cloudinary)
