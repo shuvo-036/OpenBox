@@ -43,7 +43,9 @@ const upload = multer({ storage });
 app.post("/upload", upload.single("file"), (req, res) => {
   if (!req.file) return res.status(400).json({ error: "No file uploaded" });
 
-  const fileUrl = `http://localhost:5001/uploads/${req.file.filename}`;
+      
+                
+  const fileUrl = `https://backend-w2fp.onrender.com/uploads/${req.file.filename}`;
   const previewUrl = req.file.mimetype.startsWith("image") ? fileUrl : "";
 
   res.json({ fileUrl, previewUrl });
